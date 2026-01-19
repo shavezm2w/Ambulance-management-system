@@ -21,6 +21,9 @@ export function Trips() {
   });
 
   useEffect(() => {
+    // if(SearchTerm.length > 3){
+    if(SearchTerm.length < 3){
+    }
     axios
       .get("http://localhost/project2/api/gettrips_api.php", {
         params: { currentpage: currentPage, status: status, name: SearchTerm },
@@ -38,7 +41,15 @@ export function Trips() {
       .catch((error) => {
         console.error("Error fetching data:", error);
       });
+    // }
+
   }, [SearchTerm, currentPage, status]);
+
+  function setSearchTermfucntion (e) {
+    if(e.target.value.length > 2){
+      setSearchTerm(e.target.value);
+    }
+  }
 
   return (
     <>
@@ -63,7 +74,7 @@ export function Trips() {
               <input
                 type="text"
                 placeholder="Search..."
-                onKeyUp={(e) => setSearchTerm(e.target.value)}
+                onKeyUp={(e) => setSearchTermfucntion(e)}
                 className="text-cyan-50 px-3 py-2 w-56 border-2 bg-black border-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
