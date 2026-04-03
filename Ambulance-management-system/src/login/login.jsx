@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./login.css";
-import axios from "axios";
+import { login } from "../api";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import { App } from "../navbar/navbar";
 import { Footer } from "../footer/footer";
 import { ToastContainer, toast, Zoom } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Eye, EyeOff } from "lucide-react"; // Install lucide-react
+import { Eye, EyeOff } from "lucide-react";
 
 export function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,9 +20,6 @@ export function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // if (localStorage.getItem("tokken")) {
-    //   navigate("/home");
-    // }
     if (localStorage.getItem("toastMessage")) {
       toast.success("Logout Successful...", {
         transition: Zoom,
@@ -36,11 +32,7 @@ export function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setMessage("");
-    axios
-      .post("http://localhost/project2/api/login_api.php", {
-        Email: userRole,
-        Password: password,
-      })
+    login(userRole, password)
       .then((response) => {
         if (response.data.status === "success") {
           localStorage.setItem("tokken", btoa(response.data.access_token));

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { getTrips } from "../api";
 import { App } from "../navbar/navbar";
 import { Pagination } from "../pagination/pagination";
 import { Footer } from "../footer/footer";
@@ -10,7 +10,7 @@ export function Trips() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [SearchTerm, setSearchTerm] = useState("");
-  const [status, setstatus] = useState("all"); // Default value
+  const [status, setstatus] = useState("all");
 
   const navigate = useNavigate();
 
@@ -21,13 +21,9 @@ export function Trips() {
   });
 
   useEffect(() => {
-    // if(SearchTerm.length > 3){
     if(SearchTerm.length < 3){
     }
-    axios
-      .get("http://localhost/project2/api/gettrips_api.php", {
-        params: { currentpage: currentPage, status: status, name: SearchTerm },
-      })
+    getTrips({ currentpage: currentPage, status: status, name: SearchTerm })
       .then((response) => {
         if (response.data.status === "success") {
           setTrips(response.data.data);
@@ -41,8 +37,6 @@ export function Trips() {
       .catch((error) => {
         console.error("Error fetching data:", error);
       });
-    // }
-
   }, [SearchTerm, currentPage, status]);
 
   function setSearchTermfucntion (e) {
@@ -112,7 +106,7 @@ export function Trips() {
                       colSpan="7"
                       className="py-6 text-center text-gray-500 text-lg"
                     >
-                      No records found 🚫
+                      No records found
                     </td>
                   </tr>
                 )}

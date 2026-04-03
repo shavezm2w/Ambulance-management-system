@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { getAmbulances, getAmbulanceById, addAmbulance, updateAmbulance, deleteAmbulance } from "../api";
 import { App, Imagebg } from "../navbar/navbar";
 import { Footer } from "../footer/footer";
 import { Pagination } from "../pagination/pagination";
@@ -20,7 +20,7 @@ export function Ambulance() {
     const token = localStorage.getItem("tokken");
     if (token) {
       try {
-        const decoded = jwtDecode(atob(token)); // Decode the stored JWT
+        const decoded = jwtDecode(atob(token));
         setDecodedToken(decoded);
         if (decoded.exp < Math.floor(Date.now() / 1000)) {
           localStorage.removeItem("tokken");
@@ -51,7 +51,7 @@ export function Ambulance() {
   const [isOpen, setIsOpen] = useState(false);
   const [FormType, setFormType] = useState("Submit");
   const [updateButton, setUpdateButton] = useState();
-  const [status, setstatus] = useState("all"); // Default value
+  const [status, setstatus] = useState("all");
 
   useEffect(() => {
     if (atob(localStorage.getItem("role")) != "Admin") {
@@ -59,15 +59,11 @@ export function Ambulance() {
     }
   });
 
-  useEffect(() => {
-    axios
-      .get("http://localhost/project2/api/getambulance_api.php", {
-        params: { currentpage: 1, status: status, name: SearchTerm },
-      })
+  const fetchAmbulances = (page, statusVal, search) => {
+    getAmbulances({ currentpage: page, status: statusVal, name: search })
       .then((response) => {
         if (response.data.status === "Success") {
           setTrips(response.data.data);
-          setCurrentPage(1);
           setTotalPages(response.data.totalPages);
         } else {
           setTrips([]);
@@ -78,48 +74,20 @@ export function Ambulance() {
       .catch((error) => {
         console.error("Error fetching data:", error);
       });
+  };
+
+  useEffect(() => {
+    fetchAmbulances(1, status, SearchTerm);
+    setCurrentPage(1);
   }, [status]);
 
   useEffect(() => {
-    axios
-      .get("http://localhost/project2/api/getambulance_api.php", {
-        params: { currentpage: currentPage, status: status, name: SearchTerm },
-      })
-      .then((response) => {
-        if (response.data.status === "Success") {
-          setTrips(response.data.data);
-          setCurrentPage(1);
-          setTotalPages(response.data.totalPages);
-        } else {
-          setTrips([]);
-          setTotalPages(1);
-          setCurrentPage(1);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+    fetchAmbulances(1, status, SearchTerm);
+    setCurrentPage(1);
   }, [SearchTerm]);
 
   useEffect(() => {
-    axios
-      .get("http://localhost/project2/api/getambulance_api.php", {
-        params: { currentpage: currentPage, status: status, name: SearchTerm },
-      })
-      .then((response) => {
-        if (response.data.status === "Success") {
-          setTrips(response.data.data);
-          setTotalPages(response.data.totalPages);
-        } else {
-          setTrips([]);
-          setTotalPages(1);
-          setCurrentPage(1);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to load trip data!", { position: "top-right" });
-      });
+    fetchAmbulances(currentPage, status, SearchTerm);
   }, [currentPage, isOpen]);
 
   const handleChange = (e) => {
@@ -132,48 +100,33 @@ export function Ambulance() {
 
   const Submit = (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append("name", formData.registration_number);
-    data.append("ambulance_type", formData.ambulance_type);
+    const data = { name: formData.registration_number, ambulance_type: formData.ambulance_type };
+
     if (FormType == "Submit") {
-      axios
-        .post("http://localhost/project2/api/addnewambulance_api.php", data, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        })
+      addAmbulance(data)
         .then((response) => {
           if (response.data.status === "Success") {
             toast.success("New ambulance registered", { transition: Slide });
-            console.log("Data submitted successfully!");
             setIsOpen(false);
             e.target.reset();
             setCurrentPage(totalPages);
           } else {
             toast.error("There was an error", { transition: Slide });
-            console.error("Submission failed:", response.data.message);
           }
         })
         .catch((error) => {
           console.error("Error submitting form:", error);
         });
     } else if (FormType == "Update") {
-      data.append("id", updateButton);
-      axios
-        .post("http://localhost/project2/api/updateambulance_api.php", data, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        })
+      data.id = updateButton;
+      updateAmbulance(data)
         .then((response) => {
           if (response.data.status === "Success") {
-            toast.success("Ambulance Updates", { transition: Slide });
-            console.log("Data submitted successfully!");
+            toast.success("Ambulance Updated", { transition: Slide });
             setIsOpen(false);
             e.target.reset();
           } else {
             toast.error("There was an error", { transition: Slide });
-            console.error("Submission failed:", response.data.message);
           }
         })
         .catch((error) => {
@@ -190,10 +143,7 @@ export function Ambulance() {
 
   useEffect(() => {
     if (updateButton) {
-      axios
-        .post("http://localhost/project2/api/getambulancebyid.php", {
-          id: updateButton,
-        })
+      getAmbulanceById(updateButton)
         .then((response) => {
           if (response.data.status === "Success") {
             setFormData({
@@ -216,27 +166,11 @@ export function Ambulance() {
   function deleteValue(e) {
     if (confirm("Are you sure you want to delete this row")) {
       const deleteId = e.target.value;
-      axios
-        .post("http://localhost/project2/api/delete-ambulance_api.php", {
-          id: deleteId,
-        })
+      deleteAmbulance(deleteId)
         .then((response) => {
           if (response.data.status === "success") {
             toast.success("Row deleted", { transition: Slide });
-            axios
-              .get("http://localhost/project2/api/getambulance_api.php", {
-                params: { currentpage: currentPage, name: SearchTerm },
-              })
-              .then((response) => {
-                if (response.data.status === "Success") {
-                  setTrips(response.data.data);
-                  setTotalPages(response.data.totalPages);
-                } else {
-                  setTrips([]);
-                  setTotalPages(1);
-                  setCurrentPage(1);
-                }
-              });
+            fetchAmbulances(currentPage, status, SearchTerm);
           } else {
             console.log(response.data.message);
           }
@@ -253,11 +187,8 @@ export function Ambulance() {
       <div className="relative min-h-screen flex items-center justify-center bg-gray-100">
         <Imagebg />
 
-        {/* Main Content */}
         <div className="relative z-10 container mx-auto px-6 py-10">
-          {/* Table */}
           <div className="overflow-x-auto bg-white shadow-lg rounded-lg p-6">
-            {/* Title Section */}
             <div className="w-full flex justify-between items-center mb-4">
               <div className="flex items-center gap-1">
                 <span className="text-2xl font-extrabold text-black mr-4">
@@ -266,7 +197,7 @@ export function Ambulance() {
 
                 <button
                   onClick={() => {
-                    setIsOpen(true); // Open the modal or form
+                    setIsOpen(true);
                     setFormType("Submit");
                     setUpdateButton();
                     setFormData({
@@ -308,7 +239,6 @@ export function Ambulance() {
                 </tr>
               </thead>
 
-              {/* Table Body */}
               <tbody>
                 {trips.length > 0 ? (
                   trips.map((trip, index) => (
@@ -353,7 +283,7 @@ export function Ambulance() {
                       colSpan="7"
                       className="py-6 text-center text-gray-500 text-lg"
                     >
-                      No records found 🚫
+                      No records found
                     </td>
                   </tr>
                 )}
@@ -414,14 +344,12 @@ export function Ambulance() {
                   &times;
                 </button>
               </div>
-              {/* Modal Body */}
               <div style={{ color: "#374151" }}>
                 <form
                   onSubmit={Submit}
                   className="max-w-md mx-auto bg-white shadow-md rounded-lg p-6"
                 >
                   <fieldset>
-                    {/* Registration Number Field */}
                     <div className="mb-6">
                       <label
                         htmlFor="name"
@@ -440,7 +368,6 @@ export function Ambulance() {
                       />
                     </div>
 
-                    {/* Ambulance Type Field */}
                     <div className="mb-6">
                       <label
                         htmlFor="ambulance_type"
@@ -459,7 +386,6 @@ export function Ambulance() {
                       />
                     </div>
 
-                    {/* Submit Button */}
                     <button
                       type="submit"
                       className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

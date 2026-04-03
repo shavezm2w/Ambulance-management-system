@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { App,Imagebg } from "../navbar/navbar";
+import { getHospitals } from "../api";
+import { App, Imagebg } from "../navbar/navbar";
 import { Pagination } from "../pagination/pagination";
 import { Footer } from "../footer/footer";
 import { useNavigate } from "react-router-dom";
@@ -10,19 +10,16 @@ export function Hospitals() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [SearchTerm, setSearchTerm] = useState("");
-const navigate = useNavigate();
- useEffect(()=>
-  {
-    if(atob(localStorage.getItem("role"))!='Admin'){
-      navigate("/home");
-}
-  });
+  const navigate = useNavigate();
+
   useEffect(() => {
-    console.log(SearchTerm);
-    axios
-      .get("http://localhost/project2/api/gethospital_api.php", {
-        params: { currentpage: currentPage, name: SearchTerm },
-      })
+    if (atob(localStorage.getItem("role")) != 'Admin') {
+      navigate("/home");
+    }
+  });
+
+  useEffect(() => {
+    getHospitals({ currentpage: 1, name: SearchTerm })
       .then((response) => {
         if (response.data.status === "success") {
           setTrips(response.data.data);
@@ -38,12 +35,9 @@ const navigate = useNavigate();
         console.error("Error fetching data:", error);
       });
   }, [SearchTerm]);
+
   useEffect(() => {
-    console.log(SearchTerm);
-    axios
-      .get("http://localhost/project2/api/gethospital_api.php", {
-        params: { currentpage: currentPage, name: SearchTerm },
-      })
+    getHospitals({ currentpage: currentPage, name: SearchTerm })
       .then((response) => {
         if (response.data.status === "success") {
           setTrips(response.data.data);
@@ -56,7 +50,6 @@ const navigate = useNavigate();
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
-        toast.error("Failed to load trip data!", { position: "top-right" });
       });
   }, [currentPage]);
 
@@ -64,18 +57,15 @@ const navigate = useNavigate();
     <>
       <App />
       <div className="relative min-h-screen flex items-center justify-center bg-gray-100">
-        {/* Content Wrapper */}
-                <Imagebg/>
-        
+        <Imagebg />
+
         <div className="relative z-10 container mx-auto px-6 py-10">
-          {/* Table */}
           <div className="overflow-x-auto bg-white shadow-lg rounded-lg p-6">
-            {/* Title Section */}
             <div className="w-full flex justify-between items-center mb-4">
-             <h4 className="text-2xl  font-extrabold text-black">
+              <h4 className="text-2xl  font-extrabold text-black">
                 Hospitals Details
               </h4>
-              
+
               <input
                 type="text"
                 placeholder="Search..."
@@ -113,7 +103,7 @@ const navigate = useNavigate();
                       colSpan="7"
                       className="py-6 text-center text-gray-500 text-lg"
                     >
-                      No records found 🚫
+                      No records found
                     </td>
                   </tr>
                 )}
