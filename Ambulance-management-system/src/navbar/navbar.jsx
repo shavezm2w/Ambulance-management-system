@@ -34,10 +34,13 @@ export function App() {
         {/* Logo */}
         <Link to="/home" className="flex items-center gap-2 group">
           <img
-            src="/pics/logo1.webp"
+            src="/vite.svg"
             alt="Hyper Ambulance"
             className="h-9 w-auto group-hover:scale-105 transition-transform duration-300"
           />
+          <span className="text-sm text-neutral-500">
+            Hyper Ambulance
+          </span>
         </Link>
 
         {/* User Nav */}
