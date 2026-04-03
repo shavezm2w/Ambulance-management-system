@@ -1,0 +1,602 @@
+================================================================================
+         HOW NODE.JS API ROUTES WORK IN THIS PROJECT
+         Ambulance Management System - Complete Explanation
+================================================================================
+
+
+TABLE OF CONTENTS
+-----------------
+1. Big Picture Overview
+2. How the Frontend Talks to the Backend
+3. The Express Server (server/index.js)
+4. Database Connection (server/db.js)
+5. Route Files Explained One by One
+   5a. Auth Route    (server/routes/auth.js)
+   5b. Ambulances    (server/routes/ambulances.js)
+   5c. Drivers       (server/routes/drivers.js)
+   5d. Trips         (server/routes/trips.js)
+   5e. Hospitals     (server/routes/hospitals.js)
+6. The Frontend API Layer (src/api/index.js)
+7. The Vite Proxy - How /api Requests Reach the Server
+8. Full Request Lifecycle (Step by Step Example)
+9. Development vs Production Mode
+10. Database Tables Used
+
+
+================================================================================
+1. BIG PICTURE OVERVIEW
+================================================================================
+
+This project has TWO separate applications running together:
+
+  FRONTEND (React + Vite)          BACKEND (Node.js + Express)
+  -------------------------        ----------------------------
+  - Runs on port 5173 (dev)        - Runs on port 5000
+  - Built with React 19            - Built with Node.js
+  - Uses Axios to make             - Receives HTTP requests
+    HTTP requests to /api          - Queries MySQL database
+  - Displays data in the           - Returns JSON responses
+    browser
+
+The frontend NEVER talks to the database directly.
+Instead, it sends HTTP requests (GET, POST, PUT, DELETE) to the backend,
+and the backend does the database work and sends back JSON data.
+
+Flow:
+  Browser --> React App --> Axios --> /api/ambulances --> Express Server
+  --> Route Handler --> MySQL Database --> Response JSON --> Back to React
+
+
+================================================================================
+2. HOW THE FRONTEND TALKS TO THE BACKEND
+================================================================================
+
+FILE: src/api/index.js
+
+This file creates a centralized Axios HTTP client that ALL components use.
+
+  const API = axios.create({
+    baseURL: "/api",
+  });
+
+This means every request made through this API client automatically
+gets "/api" prepended. So when a component calls:
+
+  getAmbulances({ currentpage: 1 })
+
+It actually makes a request to:
+
+  GET /api/ambulances?currentpage=1
+
+Each exported function maps to one backend endpoint:
+
+  FUNCTION NAME          HTTP METHOD    ENDPOINT URL
+  ---------------------------------------------------------------
+  login(Email, Pass)     POST           /api/auth/login
+  getTrips(params)       GET            /api/trips
+  getAmbulances(params)  GET            /api/ambulances
+  getAmbulanceById(id)   GET            /api/ambulances/123
+  addAmbulance(data)     POST           /api/ambulances
+  updateAmbulance(data)  PUT            /api/ambulances
+  deleteAmbulance(id)    DELETE         /api/ambulances/123
+  getDrivers(params)     GET            /api/drivers
+  getDriverById(id)      GET            /api/drivers/123
+  addDriver(data)        POST           /api/drivers
+  updateDriver(data)     PUT            /api/drivers
+  deleteDriver(id)       DELETE         /api/drivers/123
+  getHospitals(params)   GET            /api/hospitals
+
+
+================================================================================
+3. THE EXPRESS SERVER (server/index.js)
+================================================================================
+
+This is the ENTRY POINT of the backend. When you run "node server/index.js",
+this file starts everything.
+
+Here is what it does, line by line:
+
+  LINE 1-5: Import libraries
+    - express: The web framework that handles HTTP requests
+    - cors: Allows the frontend (different port) to talk to the backend
+    - dotenv: Loads database passwords and secrets from the .env file
+    - path + fileURLToPath: Helper to find file paths on disk
+
+  LINE 7-11: Import all route files
+    - Each route file handles one "section" of the API
+    - authRoutes handles /api/auth/...
+    - tripRoutes handles /api/trips/...
+    - ambulanceRoutes handles /api/ambulances/...
+    - driverRoutes handles /api/drivers/...
+    - hospitalRoutes handles /api/hospitals/...
+
+  LINE 13: dotenv.config()
+    - Reads the .env file and loads variables like DB_HOST, DB_PASSWORD,
+      JWT_SECRET into process.env so the app can use them
+
+  LINE 16: const app = express()
+    - Creates the Express application. This is the core of the server.
+    - Think of it as a traffic controller that receives requests and
+      sends them to the right route handler.
+
+  LINE 17: const PORT = process.env.PORT || 5000
+    - Sets the port number. Uses .env value or defaults to 5000.
+
+  LINE 19-21: Middleware setup
+    - app.use(cors())
+        Allows requests from any origin (any domain/port).
+        Without this, the browser would block requests from
+        localhost:5173 to localhost:5000.
+
+    - app.use(express.json())
+        Tells Express to automatically parse JSON request bodies.
+        When the frontend sends { "name": "AMB-001" }, Express
+        converts it to a JavaScript object accessible via req.body.
+
+    - app.use(express.urlencoded({ extended: true }))
+        Parses form-encoded data (like HTML form submissions).
+
+  LINE 24-28: Route mounting (THE KEY PART)
+    This is where Express connects URL paths to route handlers:
+
+    app.use("/api/auth", authRoutes);
+      --> Any request starting with /api/auth goes to auth.js
+      --> /api/auth/login is handled by authRoutes
+
+    app.use("/api/trips", tripRoutes);
+      --> Any request to /api/trips goes to trips.js
+
+    app.use("/api/ambulances", ambulanceRoutes);
+      --> Any request to /api/ambulances goes to ambulances.js
+      --> /api/ambulances/123 also goes here (the :id parameter)
+
+    app.use("/api/drivers", driverRoutes);
+      --> Any request to /api/drivers goes to drivers.js
+
+    app.use("/api/hospitals", hospitalRoutes);
+      --> Any request to /api/hospitals goes to hospitals.js
+
+  LINE 31-34: Production static file serving
+    - In production, Express serves the built React files from the
+      dist/ folder
+    - The catch-all route (*) sends index.html for any non-API URL,
+      so React Router can handle client-side routing
+
+  LINE 36-38: Start the server
+    - app.listen(PORT) starts the server and listens for requests
+
+
+================================================================================
+4. DATABASE CONNECTION (server/db.js)
+================================================================================
+
+This file creates a reusable MySQL connection POOL.
+
+  const pool = mysql.createPool({
+    host: process.env.DB_HOST,         // "localhost"
+    user: process.env.DB_USER,         // "phpmyadmin"
+    password: process.env.DB_PASSWORD, // "root"
+    database: process.env.DB_NAME,     // "ambulance_management_system"
+    waitForConnections: true,
+    connectionLimit: 10,
+  });
+
+WHY A POOL INSTEAD OF A SINGLE CONNECTION?
+  - A pool keeps multiple database connections open and ready
+  - When a route handler needs the database, it borrows a connection
+    from the pool, uses it, and returns it
+  - This is much faster than opening a new connection for every request
+  - connectionLimit: 10 means up to 10 simultaneous database operations
+  - waitForConnections: true means if all 10 are busy, new requests
+    wait in line instead of failing
+
+Every route file imports this pool and uses it like:
+  const [rows] = await pool.execute("SELECT * FROM ambulance", []);
+
+
+================================================================================
+5. ROUTE FILES EXPLAINED ONE BY ONE
+================================================================================
+
+Each route file follows the same pattern:
+  1. Import Express Router and the database pool
+  2. Create a router instance
+  3. Define route handlers (GET, POST, PUT, DELETE)
+  4. Export the router
+
+Inside each handler:
+  - req.query = URL query parameters (?currentpage=1&name=abc)
+  - req.body = JSON data sent in POST/PUT requests
+  - req.params = URL parameters (/ambulances/:id --> req.params.id)
+  - res.json() = Send a JSON response back to the frontend
+
+
+--------------------------------------------------------------------------------
+5a. AUTH ROUTE (server/routes/auth.js)
+--------------------------------------------------------------------------------
+
+This file handles user login. It has ONE endpoint:
+
+  POST /api/auth/login
+
+  WHAT IT RECEIVES:
+    Request body: { Email: "Admin", Password: "secret123" }
+
+  WHAT IT DOES STEP BY STEP:
+    1. Extracts Email and Password from req.body
+    2. Checks if both are provided (returns error if not)
+    3. Hashes the password using MD5:
+         crypto.createHash("md5").update(Password).digest("hex")
+         Example: "secret123" becomes "f1a543f5a2c5d49bc5146..."
+    4. Queries the database:
+         SELECT access_key FROM user
+         WHERE user_role = 'Admin' AND password = 'f1a543f5...'
+    5. If a matching user is found:
+       - Creates a JWT token with:
+         * iss: "localhost" (issuer)
+         * iat: current timestamp (issued at)
+         * exp: current time + 3600 seconds (expires in 1 hour)
+         * sub: "Admin" (subject/user role)
+       - Signs it with the JWT_SECRET from .env
+       - Returns: { status: "success", access_token: "eyJhbG..." }
+    6. If no match:
+       - Returns: { status: "error", message: "Login credentials are incorrect" }
+
+
+--------------------------------------------------------------------------------
+5b. AMBULANCES ROUTE (server/routes/ambulances.js)
+--------------------------------------------------------------------------------
+
+This file has 5 endpoints for full CRUD (Create, Read, Update, Delete):
+
+--- GET /api/ambulances (List all with pagination, search, filter) ---
+
+  QUERY PARAMETERS:
+    ?currentpage=1    (which page to show, default 1)
+    ?status=available (filter: "all", "available", or other)
+    ?name=AMB         (search by registration number)
+
+  HOW IT WORKS:
+    1. Sets 6 rows per page
+    2. Calculates offset: (page - 1) * 6
+       Page 1 = offset 0 (rows 1-6)
+       Page 2 = offset 6 (rows 7-12)
+    3. Builds a WHERE clause dynamically:
+       - Always starts with "WHERE 1" (matches everything)
+       - If name is provided, adds: AND registration_number LIKE '%AMB%'
+       - If status is "available", adds: AND ambulance_status = '1'
+       - If status is not "all", adds: AND ambulance_status != '1'
+    4. Runs TWO queries:
+       - COUNT query: Gets total number of matching records
+         Used to calculate totalPages = ceil(total / 6)
+       - DATA query: Gets the actual rows with LIMIT and OFFSET
+    5. JOINs with ambulance_logs table to get current status
+    6. Returns: { totalPages: 3, status: "Success", data: [...] }
+
+--- POST /api/ambulances (Add new ambulance) ---
+
+  REQUEST BODY:
+    { name: "AMB-007", ambulance_type: "Basic" }
+
+  HOW IT WORKS:
+    1. Extracts name and ambulance_type from req.body
+    2. Validates that name is not empty
+    3. Inserts into database:
+       INSERT INTO ambulance (registration_number, ambulance_type) VALUES (?, ?)
+       The ? marks are parameterized (safe from SQL injection)
+    4. Returns: { status: "Success", message: "Record Inserted" }
+
+--- PUT /api/ambulances (Update existing ambulance) ---
+
+  REQUEST BODY:
+    { id: 5, name: "AMB-007-NEW", ambulance_type: "Advanced" }
+
+  HOW IT WORKS:
+    1. Extracts id, name, ambulance_type from req.body
+    2. Runs UPDATE query:
+       UPDATE ambulance SET registration_number=?, ambulance_type=?,
+       updated_at=NOW() WHERE id=?
+    3. Returns: { status: "Success", message: "Record updated" }
+
+--- GET /api/ambulances/:id (Get one ambulance by ID) ---
+
+  URL EXAMPLE: /api/ambulances/5
+
+  HOW IT WORKS:
+    1. Extracts id from req.params.id (the "5" in the URL)
+    2. Validates it is a number
+    3. Queries: SELECT registration_number, ambulance_type FROM ambulance WHERE id = 5
+    4. Returns: { status: "Success", data: { registration_number: "AMB-007", ambulance_type: "Basic" } }
+
+--- DELETE /api/ambulances/:id (Delete an ambulance) ---
+
+  URL EXAMPLE: DELETE /api/ambulances/5
+
+  HOW IT WORKS:
+    1. Extracts id from req.params.id
+    2. Runs: DELETE FROM ambulance WHERE id = 5
+    3. Returns: { status: "success", message: "Record deleted successfully" }
+
+
+--------------------------------------------------------------------------------
+5c. DRIVERS ROUTE (server/routes/drivers.js)
+--------------------------------------------------------------------------------
+
+Very similar to ambulances. Has 5 endpoints:
+
+--- GET /api/drivers (List with pagination, search, filter) ---
+  - 8 rows per page
+  - Searches by driver.name
+  - Filters by driver_status from driver_logs table
+  - JOINs driver with driver_logs
+  - Concatenates address fields into one string:
+    CONCAT(address_line1, ', ', address_line2, ', ', city, ', ', state)
+  - Returns: { totalPages, status: "success", data: [...] }
+
+--- POST /api/drivers (Add new driver) ---
+  - Receives: name, age, gender, contact_number, license_number,
+    address_line1, address_line2, city, state, pin_code
+  - Inserts all fields into the driver table
+
+--- PUT /api/drivers (Update driver) ---
+  - Receives same fields plus id
+  - Updates all fields + sets updated_at = NOW()
+
+--- GET /api/drivers/:id (Get one driver) ---
+  - Returns all editable fields for the update form
+
+--- DELETE /api/drivers/:id (Delete driver) ---
+  - Deletes from driver table by id
+
+
+--------------------------------------------------------------------------------
+5d. TRIPS ROUTE (server/routes/trips.js)
+--------------------------------------------------------------------------------
+
+Read-only. Has only ONE endpoint:
+
+--- GET /api/trips (List trips with pagination, search, filter) ---
+  - 8 rows per page
+  - Searches across THREE fields: registration_number, driver name,
+    hospital name (OR condition)
+  - Status filter:
+    * "completed" = trips where trip_end <= NOW() (already finished)
+    * other = trips where trip_end >= NOW() (still ongoing)
+  - JOINs FOUR tables: ambulance, trip, driver, hospital
+  - Returns: trip id, registration_number, driver_name, hospital_name,
+    trip_start, trip_end, distance_covered_km
+
+
+--------------------------------------------------------------------------------
+5e. HOSPITALS ROUTE (server/routes/hospitals.js)
+--------------------------------------------------------------------------------
+
+Read-only. Simplest route. Has ONE endpoint:
+
+--- GET /api/hospitals (List hospitals with pagination and search) ---
+  - 8 rows per page
+  - Searches by hospital_name
+  - No status filter (unlike ambulances and drivers)
+  - Concatenates address fields into one string
+  - Returns: id, hospital_name, contact_number, email_address, address
+
+
+================================================================================
+6. THE FRONTEND API LAYER (src/api/index.js)
+================================================================================
+
+This file is the BRIDGE between React components and the backend.
+
+  import axios from "axios";
+
+  const API = axios.create({
+    baseURL: "/api",
+  });
+
+Axios is an HTTP client library. axios.create() makes a reusable
+instance with a base URL. Every request through this instance
+automatically starts with "/api".
+
+Each function wraps an API call:
+
+  export const getAmbulances = (params) =>
+    API.get("/ambulances", { params });
+
+  When called as getAmbulances({ currentpage: 1, status: "all", name: "" })
+  it sends: GET /api/ambulances?currentpage=1&status=all&name=
+
+  export const addAmbulance = (data) =>
+    API.post("/ambulances", data);
+
+  When called as addAmbulance({ name: "AMB-001", ambulance_type: "Basic" })
+  it sends: POST /api/ambulances with JSON body
+
+HOW COMPONENTS USE IT:
+  In ambulance.jsx:
+    import { getAmbulances, addAmbulance } from "../api";
+
+    // Fetching data
+    getAmbulances({ currentpage: 1, status: "all", name: "" })
+      .then((response) => {
+        setTrips(response.data.data);   // the actual rows
+        setTotalPages(response.data.totalPages);
+      });
+
+    // Adding new record
+    addAmbulance({ name: "AMB-007", ambulance_type: "Basic" })
+      .then((response) => {
+        if (response.data.status === "Success") {
+          toast.success("New ambulance registered");
+        }
+      });
+
+
+================================================================================
+7. THE VITE PROXY - HOW /api REQUESTS REACH THE SERVER
+================================================================================
+
+FILE: vite.config.js
+
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
+  }
+
+PROBLEM THIS SOLVES:
+  During development, React runs on port 5173 and Express runs on
+  port 5000. When the browser tries to call /api/ambulances, it goes
+  to localhost:5173/api/ambulances (the React server), which doesn't
+  know what that is.
+
+HOW THE PROXY FIXES IT:
+  Vite intercepts any request starting with /api and FORWARDS it to
+  http://localhost:5000. So:
+
+  Browser requests: http://localhost:5173/api/ambulances
+  Vite catches it and forwards to: http://localhost:5000/api/ambulances
+  Express receives it and handles it normally
+
+  The browser never knows about port 5000. It thinks everything is
+  on port 5173. This avoids CORS issues during development.
+
+  changeOrigin: true changes the Origin header of the request to
+  match the target, making it look like the request came from
+  localhost:5000 itself.
+
+
+================================================================================
+8. FULL REQUEST LIFECYCLE (Step by Step Example)
+================================================================================
+
+Let's trace what happens when you open the Ambulance page:
+
+STEP 1: React component mounts
+  ambulance.jsx useEffect runs:
+    fetchAmbulances(1, "all", "")
+
+STEP 2: fetchAmbulances calls the API
+    getAmbulances({ currentpage: 1, status: "all", name: "" })
+
+STEP 3: Axios sends the HTTP request
+    GET /api/ambulances?currentpage=1&status=all&name=
+
+STEP 4: Vite proxy intercepts (development only)
+    Forwards to http://localhost:5000/api/ambulances?currentpage=1&status=all&name=
+
+STEP 5: Express receives the request
+    server/index.js has: app.use("/api/ambulances", ambulanceRoutes)
+    So it strips "/api/ambulances" and sends to ambulances.js router
+    The router matches: router.get("/", handler)
+
+STEP 6: Route handler runs
+    - Reads query params: currentpage=1, status="all", name=""
+    - Builds SQL: SELECT ... FROM ambulance LEFT JOIN ambulance_logs ...
+    - Sends query to MySQL via pool.execute()
+
+STEP 7: MySQL returns results
+    - Returns array of ambulance records
+
+STEP 8: Route handler sends JSON response
+    res.json({
+      totalPages: 3,
+      status: "Success",
+      message: "Data found",
+      data: [
+        { id: 1, registration_number: "AMB-001", ambulance_type: "Basic", ambulance_status: 1 },
+        { id: 2, registration_number: "AMB-002", ambulance_type: "Advanced", ambulance_status: 0 },
+        ...
+      ]
+    })
+
+STEP 9: Axios receives the response
+    The .then() callback fires with the response object
+
+STEP 10: React updates state
+    setTrips(response.data.data)     --> stores the ambulance array
+    setTotalPages(response.data.totalPages)  --> stores page count
+
+STEP 11: React re-renders
+    The table now shows the ambulance data
+    The pagination component shows the correct number of pages
+
+
+================================================================================
+9. DEVELOPMENT vs PRODUCTION MODE
+================================================================================
+
+--- DEVELOPMENT (npm run dev) ---
+
+  Runs TWO processes simultaneously using "concurrently":
+
+  Process 1: node --watch server/index.js
+    - Starts Express on port 5000
+    - --watch flag auto-restarts when server files change
+
+  Process 2: vite
+    - Starts Vite dev server on port 5173
+    - Hot Module Replacement (instant updates when you save files)
+    - Proxy forwards /api to port 5000
+
+  Request flow:
+    Browser:5173 --> Vite Proxy --> Express:5000 --> MySQL
+
+--- PRODUCTION (npm run build + npm start) ---
+
+  Step 1: npm run build
+    - Vite compiles React app into static HTML/CSS/JS in dist/ folder
+
+  Step 2: npm start (node server/index.js)
+    - Express serves BOTH the API and the static files
+    - No Vite, no proxy needed
+    - Everything runs on port 5000
+
+  Request flow:
+    Browser:5000 --> Express:5000 --> MySQL
+    (Static files also served by Express from dist/)
+
+
+================================================================================
+10. DATABASE TABLES USED
+================================================================================
+
+Based on the SQL queries in the route files, these tables exist:
+
+  TABLE: user
+    Columns: user_role, password, access_key
+    Used by: auth.js (login)
+
+  TABLE: ambulance
+    Columns: id, registration_number, ambulance_type, updated_at
+    Used by: ambulances.js (CRUD operations)
+
+  TABLE: ambulance_logs
+    Columns: ambulance_id, ambulance_status
+    Used by: ambulances.js (LEFT JOIN for status)
+
+  TABLE: driver
+    Columns: id, name, age, gender, contact_number, license_number,
+             address_line1, address_line2, city, state, pin_code, updated_at
+    Used by: drivers.js (CRUD operations)
+
+  TABLE: driver_logs
+    Columns: driver_id, driver_status
+    Used by: drivers.js (LEFT JOIN for status)
+
+  TABLE: trip
+    Columns: id, ambulance_id, driver_id, hospital_id,
+             trip_start, trip_end, distance_covered_km
+    Used by: trips.js (read with JOINs)
+
+  TABLE: hospital
+    Columns: id, hospital_name, contact_number, email_address,
+             address_line1, address_line2, city, state
+    Used by: hospitals.js (read only), trips.js (JOIN)
+
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================

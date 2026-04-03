@@ -128,11 +128,13 @@ export function Trips() {
             </table>
           </div>
 
+          {loading ? null : trips.length > 0 ? (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
             setCurrentPage={setCurrentPage}
           />
+) : null}
         </div>
       </div>
       <Footer />
