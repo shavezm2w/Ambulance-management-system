@@ -4,6 +4,7 @@ import { App } from "../navbar/navbar";
 import { Pagination } from "../pagination/pagination";
 import { Footer } from "../footer/footer";
 import { LiveBackground } from "../livebg/LiveBackground";
+import { Loader } from "../loader/Loader";
 import { useNavigate } from "react-router-dom";
 
 export function Hospitals() {
@@ -11,6 +12,7 @@ export function Hospitals() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [SearchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,6 +22,7 @@ export function Hospitals() {
   });
 
   useEffect(() => {
+    setLoading(true);
     getHospitals({ currentpage: 1, name: SearchTerm })
       .then((response) => {
         if (response.data.status === "success") {
@@ -34,10 +37,12 @@ export function Hospitals() {
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
-      });
+      })
+      .finally(() => setLoading(false));
   }, [SearchTerm]);
 
   useEffect(() => {
+    setLoading(true);
     getHospitals({ currentpage: currentPage, name: SearchTerm })
       .then((response) => {
         if (response.data.status === "success") {
@@ -51,7 +56,8 @@ export function Hospitals() {
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
-      });
+      })
+      .finally(() => setLoading(false));
   }, [currentPage]);
 
   return (
@@ -84,7 +90,13 @@ export function Hospitals() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {trips.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan="5">
+                      <Loader message="Loading hospitals..." />
+                    </td>
+                  </tr>
+                ) : trips.length > 0 ? (
                   trips.map((trip, index) => (
                     <tr
                       key={trip.id}

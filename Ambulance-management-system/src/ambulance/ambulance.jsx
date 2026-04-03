@@ -4,6 +4,7 @@ import { App } from "../navbar/navbar";
 import { Footer } from "../footer/footer";
 import { LiveBackground } from "../livebg/LiveBackground";
 import { Pagination } from "../pagination/pagination";
+import { Loader, ButtonLoader } from "../loader/Loader";
 import { ToastContainer, Slide, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
@@ -53,6 +54,8 @@ export function Ambulance() {
   const [FormType, setFormType] = useState("Submit");
   const [updateButton, setUpdateButton] = useState();
   const [status, setstatus] = useState("all");
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (atob(localStorage.getItem("role")) != "Admin") {
@@ -61,6 +64,7 @@ export function Ambulance() {
   });
 
   const fetchAmbulances = (page, statusVal, search) => {
+    setLoading(true);
     getAmbulances({ currentpage: page, status: statusVal, name: search })
       .then((response) => {
         if (response.data.status === "Success") {
@@ -74,7 +78,8 @@ export function Ambulance() {
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -103,6 +108,7 @@ export function Ambulance() {
     e.preventDefault();
     const data = { name: formData.registration_number, ambulance_type: formData.ambulance_type };
 
+    setSubmitting(true);
     if (FormType == "Submit") {
       addAmbulance(data)
         .then((response) => {
@@ -117,7 +123,8 @@ export function Ambulance() {
         })
         .catch((error) => {
           console.error("Error submitting form:", error);
-        });
+        })
+        .finally(() => setSubmitting(false));
     } else if (FormType == "Update") {
       data.id = updateButton;
       updateAmbulance(data)
@@ -132,7 +139,8 @@ export function Ambulance() {
         })
         .catch((error) => {
           console.error("Error submitting form:", error);
-        });
+        })
+        .finally(() => setSubmitting(false));
     }
   };
 
@@ -240,7 +248,13 @@ export function Ambulance() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {trips.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan="5">
+                      <Loader message="Loading ambulances..." />
+                    </td>
+                  </tr>
+                ) : trips.length > 0 ? (
                   trips.map((trip, index) => (
                     <tr
                       key={trip.id}
@@ -291,7 +305,7 @@ export function Ambulance() {
                 ) : (
                   <tr>
                     <td
-                      colSpan="7"
+                      colSpan="5"
                       className="py-12 text-center text-neutral-400 text-sm"
                     >
                       No records found
@@ -357,9 +371,10 @@ export function Ambulance() {
                 <div className="flex gap-3 pt-2">
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-black rounded-lg hover:bg-neutral-800 transition-all"
+                    disabled={submitting}
+                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-black rounded-lg hover:bg-neutral-800 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {FormType}
+                    {submitting ? <ButtonLoader /> : FormType}
                   </button>
                   <button
                     type="button"

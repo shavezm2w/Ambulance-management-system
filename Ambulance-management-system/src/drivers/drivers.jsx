@@ -5,6 +5,7 @@ import { Footer } from "../footer/footer";
 import { LiveBackground } from "../livebg/LiveBackground";
 import { useNavigate } from "react-router-dom";
 import { Pagination } from "../pagination/pagination";
+import { Loader, ButtonLoader } from "../loader/Loader";
 import { ToastContainer, Slide, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -18,6 +19,8 @@ export function Drivers() {
   const [isOpen, setIsOpen] = useState(false);
   const [formType, setFormType] = useState("Submit");
   const [status, setstatus] = useState("all");
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -40,6 +43,7 @@ export function Drivers() {
   });
 
   const fetchDrivers = (page, statusVal, search) => {
+    setLoading(true);
     getDrivers({ currentpage: page, name: search, status: statusVal })
       .then((response) => {
         if (response.data.status === "success") {
@@ -52,7 +56,8 @@ export function Drivers() {
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
-      });
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -76,6 +81,7 @@ export function Drivers() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSubmitting(true);
     if (formType == "Submit") {
       addDriver(formData)
         .then((response) => {
@@ -90,7 +96,8 @@ export function Drivers() {
         })
         .catch((error) => {
           console.error("Error submitting form:", error);
-        });
+        })
+        .finally(() => setSubmitting(false));
     } else if (formType == "Update") {
       updateDriver(formData)
         .then((response) => {
@@ -104,7 +111,8 @@ export function Drivers() {
         })
         .catch((error) => {
           console.error("Error submitting form:", error);
-        });
+        })
+        .finally(() => setSubmitting(false));
     }
   };
 
@@ -224,7 +232,13 @@ export function Drivers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {trips.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan="7">
+                      <Loader message="Loading drivers..." />
+                    </td>
+                  </tr>
+                ) : trips.length > 0 ? (
                   trips.map((trip, index) => (
                     <tr
                       key={trip.id}
@@ -371,9 +385,10 @@ export function Drivers() {
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-black rounded-lg hover:bg-neutral-800 transition-all"
+                    disabled={submitting}
+                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-black rounded-lg hover:bg-neutral-800 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {formType}
+                    {submitting ? <ButtonLoader /> : formType}
                   </button>
                   <button
                     type="button"

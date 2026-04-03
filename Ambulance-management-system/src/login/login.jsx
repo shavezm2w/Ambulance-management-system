@@ -8,6 +8,7 @@ import { LiveBackground } from "../livebg/LiveBackground";
 import { ToastContainer, toast, Zoom } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Eye, EyeOff } from "lucide-react";
+import { ButtonLoader } from "../loader/Loader";
 
 export function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,6 +19,7 @@ export function Login() {
   const [userRole, setUserRole] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setMessage("");
+    setLoggingIn(true);
     login(userRole, password)
       .then((response) => {
         if (response.data.status === "success") {
@@ -44,7 +47,8 @@ export function Login() {
           setPassword("");
           setMessage("Wrong Credentials");
         }
-      });
+      })
+      .finally(() => setLoggingIn(false));
   };
 
   return (
@@ -128,9 +132,10 @@ export function Login() {
               <div className="animate-fade-in-up delay-300">
                 <button
                   type="submit"
-                  className="w-full py-3 font-semibold text-white bg-black rounded-lg hover:bg-neutral-800 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-all duration-300"
+                  disabled={loggingIn}
+                  className="w-full py-3 font-semibold text-white bg-black rounded-lg hover:bg-neutral-800 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Sign In
+                  {loggingIn ? <ButtonLoader /> : "Sign In"}
                 </button>
               </div>
             </form>

@@ -4,6 +4,7 @@ import { App } from "../navbar/navbar";
 import { Pagination } from "../pagination/pagination";
 import { Footer } from "../footer/footer";
 import { LiveBackground } from "../livebg/LiveBackground";
+import { Loader } from "../loader/Loader";
 import { useNavigate } from "react-router-dom";
 
 export function Trips() {
@@ -12,6 +13,7 @@ export function Trips() {
   const [totalPages, setTotalPages] = useState(1);
   const [SearchTerm, setSearchTerm] = useState("");
   const [status, setstatus] = useState("all");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -24,6 +26,7 @@ export function Trips() {
   useEffect(() => {
     if(SearchTerm.length < 3){
     }
+    setLoading(true);
     getTrips({ currentpage: currentPage, status: status, name: SearchTerm })
       .then((response) => {
         if (response.data.status === "success") {
@@ -37,7 +40,8 @@ export function Trips() {
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
-      });
+      })
+      .finally(() => setLoading(false));
   }, [SearchTerm, currentPage, status]);
 
   function setSearchTermfucntion (e) {
@@ -89,7 +93,13 @@ export function Trips() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {trips.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan="7">
+                      <Loader message="Loading trips..." />
+                    </td>
+                  </tr>
+                ) : trips.length > 0 ? (
                   trips.map((trip, index) => (
                     <tr
                       key={trip.id}
