@@ -9,19 +9,19 @@ export function Pagination({ currentPage, totalPages, setCurrentPage }) {
     { length: endPage - startPage + 1 },
     (_, i) => startPage + i
   );
+
   return (
-    <div className="flex flex-col items-center mt-8">
-      {/* Page Info */}
-      <h2 className="text-lg font-semibold mb-4">
+    <div className="flex flex-col items-center mt-8 gap-4">
+      <span className="text-sm text-neutral-500">
         Page {currentPage} of {totalPages}
-      </h2>
+      </span>
       {totalPages > 1 && (
         <>
-          <div className="flex space-x-2">
+          <div className="flex items-center gap-1">
             {currentPage > 2 && (
               <button
                 onClick={() => setCurrentPage(1)}
-                className="px-4 py-2 rounded bg-gray-500 text-gray-200 hover:bg-gray-900 disabled:opacity-50"
+                className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg text-neutral-600 hover:bg-black hover:text-white hover:border-black transition-all"
               >
                 First
               </button>
@@ -30,7 +30,7 @@ export function Pagination({ currentPage, totalPages, setCurrentPage }) {
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 rounded bg-gray-500 text-gray-200 hover:bg-gray-900 disabled:opacity-50"
+              className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg text-neutral-600 hover:bg-black hover:text-white hover:border-black transition-all disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-neutral-600 disabled:hover:border-neutral-200"
             >
               Prev
             </button>
@@ -39,10 +39,10 @@ export function Pagination({ currentPage, totalPages, setCurrentPage }) {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-4 py-2 rounded font-semibold ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                   currentPage === page
                     ? "bg-black text-white"
-                    : "bg-gray-500 text-gray-200 hover:bg-gray-900 hover:text-white"
+                    : "border border-neutral-200 text-neutral-600 hover:bg-black hover:text-white hover:border-black"
                 }`}
               >
                 {page}
@@ -54,14 +54,15 @@ export function Pagination({ currentPage, totalPages, setCurrentPage }) {
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
               disabled={currentPage === totalPages}
-              className="px-4 py-2 rounded bg-gray-500 text-gray-200 hover:bg-gray-900 disabled:opacity-50"
+              className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg text-neutral-600 hover:bg-black hover:text-white hover:border-black transition-all disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-neutral-600 disabled:hover:border-neutral-200"
             >
               Next
             </button>
+
             {currentPage < totalPages - 1 && (
               <button
                 onClick={() => setCurrentPage(totalPages)}
-                className="px-4 py-2 rounded bg-gray-500 text-gray-200 hover:bg-gray-900 disabled:opacity-50"
+                className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg text-neutral-600 hover:bg-black hover:text-white hover:border-black transition-all"
               >
                 Last
               </button>
@@ -69,9 +70,9 @@ export function Pagination({ currentPage, totalPages, setCurrentPage }) {
           </div>
 
           <input
-          className="mt-4 px- py-1 border rounded bg-gray-200 text-black w-36 text-center"
+            className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg bg-white text-black w-32 text-center focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
             type="number"
-            placeholder="Go to page..."
+            placeholder="Go to page"
             min={1}
             max={totalPages}
             onChange={(e) => {
@@ -80,7 +81,6 @@ export function Pagination({ currentPage, totalPages, setCurrentPage }) {
                 setCurrentPage(page);
               }
             }}
-            
           />
         </>
       )}

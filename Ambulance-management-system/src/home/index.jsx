@@ -1,7 +1,8 @@
-import { App} from "../navbar/navbar";
+import { App } from "../navbar/navbar";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Footer } from "../footer/footer";
+import { LiveBackground } from "../livebg/LiveBackground";
 import { ToastContainer, Slide, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -18,66 +19,73 @@ export function Home() {
   return (
     <>
       <App />
-      <div className="relative min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-white relative">
+        <LiveBackground />
         <ToastContainer />
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img
-            src="/pics/bgmain.webp"
-            alt="background"
-            className="w-full h-full object-cover opacity-50"
-          />
-        </div>
 
-        <div className="relative z-10 flex flex-col items-center justify-center p-8">
-          <div className="max-w-5xl w-full bg-white rounded-lg shadow-lg p-6 flex flex-col md:flex-row items-center gap-6">
-            <div className="md:w-1/2 text-center md:text-left">
+        {/* Hero Section */}
+        <section className="relative z-10 max-w-7xl mx-auto px-6 py-20">
+          <div className="flex flex-col md:flex-row items-center gap-16">
+            <div className="md:w-1/2 space-y-6">
               <img
-                className="h-50 w-150"
+                className="h-12 w-auto animate-fade-in-up"
                 src="/pics/logo1.webp"
-                alt=""
+                alt="Hyper Ambulance"
               />
-              <h4 className="text-lg mb-4 font-semibold">
-                Sabse Tezz Sabse Aage...
-              </h4>
-              <p className="text-gray-600 mb-4">
-                Ambulance Service in your neighborhood. Hyper Ambulance is
-                India’s largest ambulance service with a whopping 1 Million+
-                customers. Experience the quickest and most reliable medical
-                assistance right at your doorstep.
+              <h1 className="text-4xl md:text-5xl font-bold text-black tracking-tight leading-tight animate-fade-in-up delay-100">
+                Sabse Tezz<br />Sabse Aage...
+              </h1>
+              <p className="text-neutral-500 text-lg leading-relaxed max-w-md animate-fade-in-up delay-200">
+                India's largest ambulance service with 1 Million+ customers.
+                Experience the quickest and most reliable medical assistance
+                right at your doorstep.
               </p>
-              <div className="flex justify-center md:justify-start gap-4">
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+              <div className="flex gap-4 pt-2 animate-fade-in-up delay-300">
+                <button className="px-6 py-3 bg-black text-white text-sm font-medium rounded-lg hover:bg-neutral-800 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-0.5 transition-all duration-300">
                   Book Now
                 </button>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                  Book For Advance
+                <button className="px-6 py-3 bg-white text-black text-sm font-medium rounded-lg border-2 border-black hover:bg-black hover:text-white hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+                  Book Advance
                 </button>
               </div>
             </div>
-
-            {/* Right Section */}
-            <div className="md:w-1/2">
+            <div className="md:w-1/2 animate-slide-right delay-200">
               <img
                 src="/pics/pic1.webp"
                 alt="Ambulance Service"
-                className="w-full rounded-lg shadow-lg"
+                className="w-full rounded-2xl shadow-2xl grayscale hover:grayscale-0 hover:scale-[1.02] transition-all duration-700"
               />
             </div>
           </div>
+        </section>
 
-          {/* Why Choose Us Section */}
-          <div className="max-w-4xl w-full bg-white rounded-lg shadow-lg p-6 mt-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Why Choose Us?</h2>
-            <p className="text-gray-600">
+        {/* Why Choose Us */}
+        <section className="relative z-10 glass-dark text-white py-20">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <h2 className="text-3xl font-bold tracking-tight mb-6 animate-fade-in-up">Why Choose Us?</h2>
+            <p className="text-neutral-400 text-lg leading-relaxed animate-fade-in-up delay-100">
               At Hyper Ambulance, we offer a wide range of medical services to
-              meet your needs. Our fleet of ambulances is equipped with all the
-              necessary equipment and facilities to ensure the highest standard
-              of medical care. Choose us for quick, reliable, and efficient
-              service!
+              meet your needs. Our fleet is equipped with all necessary equipment
+              to ensure the highest standard of medical care. Quick, reliable,
+              and efficient.
             </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+              {[
+                { value: "24/7", label: "Always Available" },
+                { value: "1M+", label: "Happy Customers" },
+                { value: "500+", label: "Ambulances" },
+              ].map((stat, i) => (
+                <div
+                  key={i}
+                  className={`p-6 border border-neutral-800 rounded-xl hover:border-neutral-600 hover:bg-white/5 transition-all duration-300 animate-fade-in-up delay-${(i + 2) * 100}`}
+                >
+                  <div className="text-3xl font-bold mb-2">{stat.value}</div>
+                  <p className="text-neutral-400 text-sm">{stat.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
       </div>
       <Footer />
     </>

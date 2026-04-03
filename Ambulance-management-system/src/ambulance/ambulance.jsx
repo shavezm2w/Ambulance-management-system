@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { getAmbulances, getAmbulanceById, addAmbulance, updateAmbulance, deleteAmbulance } from "../api";
-import { App, Imagebg } from "../navbar/navbar";
+import { App } from "../navbar/navbar";
 import { Footer } from "../footer/footer";
+import { LiveBackground } from "../livebg/LiveBackground";
 import { Pagination } from "../pagination/pagination";
 import { ToastContainer, Slide, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -180,100 +181,110 @@ export function Ambulance() {
         });
     }
   }
+
   return (
     <>
       <App />
       <ToastContainer />
-      <div className="relative min-h-screen flex items-center justify-center bg-gray-100">
-        <Imagebg />
-
-        <div className="relative z-10 container mx-auto px-6 py-10">
-          <div className="overflow-x-auto bg-white shadow-lg rounded-lg p-6">
-            <div className="w-full flex justify-between items-center mb-4">
-              <div className="flex items-center gap-1">
-                <span className="text-2xl font-extrabold text-black mr-4">
-                  Ambulance Details
-                </span>
-
-                <button
-                  onClick={() => {
-                    setIsOpen(true);
-                    setFormType("Submit");
-                    setUpdateButton();
-                    setFormData({
-                      registration_number: "",
-                      ambulance_type: "",
-                    });
-                  }}
-                  className="hover:rounded hover:bg-emerald-600  cursor-pointer px-3 py-2 rounded-3xl text-white bg-gray-900 transition-all duration-500"
-                >
-                  Add More &#43;
-                </button>
-                <select
-                  name="gender"
-                  className="bg-gray-900 text-white px-1 py-1.5 rounded-xl"
-                  value={status}
-                  onChange={(e) => setstatus(e.target.value)}
-                >
-                  <option value="all">Select Availability</option>
-                  <option value="available">Available</option>
-                  <option value="Unavailable">Unavailable</option>
-                </select>
-              </div>
-
+      <div className="min-h-screen bg-neutral-50 relative">
+        <LiveBackground />
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 animate-fade-in-up">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-black tracking-tight">Ambulance Details</h1>
+              <button
+                onClick={() => {
+                  setIsOpen(true);
+                  setFormType("Submit");
+                  setUpdateButton();
+                  setFormData({
+                    registration_number: "",
+                    ambulance_type: "",
+                  });
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-neutral-800 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+              >
+                + Add New
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <select
+                className="px-3 py-2 text-sm glass border border-neutral-200 rounded-lg focus:outline-none focus:border-black transition-all"
+                value={status}
+                onChange={(e) => setstatus(e.target.value)}
+              >
+                <option value="all">All Status</option>
+                <option value="available">Available</option>
+                <option value="Unavailable">Unavailable</option>
+              </select>
               <input
                 type="text"
                 placeholder="Search..."
                 onKeyUp={(e) => setSearchTerm(e.target.value)}
-                className="text-cyan-50 px-3 py-2 w-56 border-2 bg-black border-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="px-4 py-2 text-sm glass border border-neutral-200 rounded-lg w-56 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
               />
             </div>
-            <table className="w-full border-collapse rounded-lg">
-              <thead className="bg-gray-900 text-white">
-                <tr>
-                  <th className="py-3 px-4 text-left">#</th>
-                  <th className="py-3 px-4 text-left">Ambulance No</th>
-                  <th className="py-3 px-4 text-left">Ambulance Type</th>
-                  <th className="py-3 px-4 text-left">Ambulance Status</th>
-                  <th className="py-3 px-4 text-left">Action</th>
+          </div>
+
+          {/* Table */}
+          <div className="glass border border-neutral-200 rounded-xl overflow-hidden shadow-lg animate-fade-in-up delay-100">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-black text-white">
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">#</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Ambulance No</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Type</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Status</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-
-              <tbody>
+              <tbody className="divide-y divide-neutral-100">
                 {trips.length > 0 ? (
                   trips.map((trip, index) => (
                     <tr
                       key={trip.id}
-                      className="border-b transition duration-200 hover:bg-gray-100">
-                      <td className="py-4 px-4 ">{index + 1}</td>
-                      <td className="py-4 px-4 ">{trip.registration_number}</td>
-                      <td className="py-4 px-4 ">{trip.ambulance_type}</td>
-                      <td className="py-4 px-4 ">
-                        {trip.ambulance_status == 3
-                          ? "Grounded"
-                          : trip.ambulance_status == 2
-                          ? "Maintenance"
-                          : trip.ambulance_status == 0
-                          ? "Went to Trip"
-                          : trip.ambulance_status == 1
-                          ? "Available"
-                          : "Unknown"}
+                      className="hover:bg-neutral-50/80 transition-colors"
+                    >
+                      <td className="py-3 px-4 text-sm text-neutral-500">{index + 1}</td>
+                      <td className="py-3 px-4 text-sm font-medium text-black">{trip.registration_number}</td>
+                      <td className="py-3 px-4 text-sm text-neutral-600">{trip.ambulance_type}</td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-full ${
+                          trip.ambulance_status == 1
+                            ? "bg-neutral-100 text-black"
+                            : trip.ambulance_status == 0
+                            ? "bg-black text-white"
+                            : "bg-neutral-200 text-neutral-600"
+                        }`}>
+                          {trip.ambulance_status == 3
+                            ? "Grounded"
+                            : trip.ambulance_status == 2
+                            ? "Maintenance"
+                            : trip.ambulance_status == 0
+                            ? "On Trip"
+                            : trip.ambulance_status == 1
+                            ? "Available"
+                            : "Unknown"}
+                        </span>
                       </td>
-                      <td className="py-4 px-4 ">
-                        <button
-                          value={trip.id}
-                          onClick={(e) => updateValue(e)}
-                          className="hover:rounded  cursor-pointer px-3 py-2 rounded-3xl text-white bg-neutral-800 transition-all duration-500"
-                        >
-                          Update
-                        </button>
-                        <button
-                          value={trip.id}
-                          onClick={(e) => deleteValue(e)}
-                          className="hover:rounded cursor-pointer px-3 py-2 rounded-3xl text-white bg-red-900 transition-all duration-500"
-                        >
-                          delete
-                        </button>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <button
+                            value={trip.id}
+                            onClick={(e) => updateValue(e)}
+                            className="px-3 py-1.5 text-xs font-medium border border-neutral-200 rounded-lg hover:bg-black hover:text-white hover:border-black transition-all"
+                          >
+                            Update
+                          </button>
+                          <button
+                            value={trip.id}
+                            onClick={(e) => deleteValue(e)}
+                            className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-neutral-700 transition-all"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -281,7 +292,7 @@ export function Ambulance() {
                   <tr>
                     <td
                       colSpan="7"
-                      className="py-6 text-center text-gray-500 text-lg"
+                      className="py-12 text-center text-neutral-400 text-sm"
                     >
                       No records found
                     </td>
@@ -290,132 +301,75 @@ export function Ambulance() {
               </tbody>
             </table>
           </div>
+
           <Pagination
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
             totalPages={totalPages}
           />
         </div>
+
+        {/* Modal */}
         {isOpen && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 50,
-            }}
-          >
-            <div
-              style={{
-                backgroundColor: "white",
-                borderRadius: "0.5rem",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                maxWidth: "28rem",
-                width: "100%",
-                padding: "1.5rem",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "1rem",
-                }}
-              >
-                <h3 style={{ fontSize: "1.25rem", fontWeight: "600" }}>
-                  Add new ambulance
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-8 animate-scale-in">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-black">
+                  {FormType === "Submit" ? "Add Ambulance" : "Update Ambulance"}
                 </h3>
                 <button
                   onClick={() => setIsOpen(false)}
-                  style={{
-                    color: "#6b7280",
-                    fontSize: "1.5rem",
-                    lineHeight: "1",
-                    cursor: "pointer",
-                  }}
+                  className="text-neutral-400 hover:text-black text-2xl transition-colors"
                 >
                   &times;
                 </button>
               </div>
-              <div style={{ color: "#374151" }}>
-                <form
-                  onSubmit={Submit}
-                  className="max-w-md mx-auto bg-white shadow-md rounded-lg p-6"
-                >
-                  <fieldset>
-                    <div className="mb-6">
-                      <label
-                        htmlFor="name"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Registration Number
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="registration_number"
-                        value={formData.registration_number}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
 
-                    <div className="mb-6">
-                      <label
-                        htmlFor="ambulance_type"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Ambulance Type
-                      </label>
-                      <input
-                        type="text"
-                        id="ambulance_type"
-                        name="ambulance_type"
-                        value={formData.ambulance_type}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
+              <form onSubmit={Submit} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+                    Registration Number
+                  </label>
+                  <input
+                    type="text"
+                    name="registration_number"
+                    value={formData.registration_number}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+                    required
+                  />
+                </div>
 
-                    <button
-                      type="submit"
-                      className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      {FormType}
-                    </button>
-                  </fieldset>
-                </form>
-              </div>
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+                    Ambulance Type
+                  </label>
+                  <input
+                    type="text"
+                    name="ambulance_type"
+                    value={formData.ambulance_type}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+                    required
+                  />
+                </div>
 
-              <div
-                style={{
-                  marginTop: "1.5rem",
-                  display: "flex",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <button
-                  onClick={() => setIsOpen(false)}
-                  style={{
-                    padding: "0.5rem 1rem",
-                    backgroundColor: "#ef4444",
-                    color: "white",
-                    borderRadius: "0.375rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  Close
-                </button>
-              </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 text-sm font-semibold text-white bg-black rounded-lg hover:bg-neutral-800 transition-all"
+                  >
+                    {FormType}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="px-6 py-2.5 text-sm font-medium border border-neutral-200 rounded-lg hover:bg-neutral-100 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

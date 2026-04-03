@@ -3,6 +3,7 @@ import { getTrips } from "../api";
 import { App } from "../navbar/navbar";
 import { Pagination } from "../pagination/pagination";
 import { Footer } from "../footer/footer";
+import { LiveBackground } from "../livebg/LiveBackground";
 import { useNavigate } from "react-router-dom";
 
 export function Trips() {
@@ -48,20 +49,19 @@ export function Trips() {
   return (
     <>
       <App />
-      <div className="relative min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="absolute inset-0">
-          <img
-            src="/pics/bgmain.webp"
-            alt="background"
-            className="w-full h-full object-cover opacity-40"
-          />
-        </div>
-        <div className="relative z-10 container mx-auto px-6 py-10">
-          <div className="overflow-x-auto bg-white shadow-lg rounded-lg p-6">
-            <div className="w-full flex justify-between items-center mb-4">
-              <h4 className="text-2xl  font-extrabold text-black">Trip Details</h4>
-              <select name="gender" className="bg-gray-900 text-white px-1 py-1.5 rounded-xl" value={status} onChange={(e) => setstatus(e.target.value)}>
-                <option value="all">Select Trips Status</option>
+      <div className="min-h-screen bg-neutral-50 relative">
+        <LiveBackground />
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 animate-fade-in-up">
+            <h1 className="text-2xl font-bold text-black tracking-tight">Trip Details</h1>
+            <div className="flex items-center gap-3">
+              <select
+                className="px-3 py-2 text-sm glass border border-neutral-200 rounded-lg focus:outline-none focus:border-black transition-all"
+                value={status}
+                onChange={(e) => setstatus(e.target.value)}
+              >
+                <option value="all">All Status</option>
                 <option value="completed">Completed</option>
                 <option value="ongoing">Ongoing</option>
               </select>
@@ -69,42 +69,46 @@ export function Trips() {
                 type="text"
                 placeholder="Search..."
                 onKeyUp={(e) => setSearchTermfucntion(e)}
-                className="text-cyan-50 px-3 py-2 w-56 border-2 bg-black border-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="px-4 py-2 text-sm glass border border-neutral-200 rounded-lg w-56 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
               />
             </div>
-            <table className="w-full border-collapse rounded-lg">
-              <thead className="bg-gray-900 text-white">
-                <tr>
-                  <th className="py-3 px-4 text-left">#</th>
-                  <th className="py-3 px-4 text-left">Ambulance No</th>
-                  <th className="py-3 px-4 text-left">Driver Name</th>
-                  <th className="py-3 px-4 text-left">Hospital Name</th>
-                  <th className="py-3 px-4 text-left">Trip Start</th>
-                  <th className="py-3 px-4 text-left">Trip End</th>
-                  <th className="py-3 px-4 text-left">Distance Covered</th>
+          </div>
+
+          {/* Table */}
+          <div className="glass border border-neutral-200 rounded-xl overflow-hidden shadow-lg animate-fade-in-up delay-100">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-black text-white">
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">#</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Ambulance No</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Driver</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Hospital</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Start</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">End</th>
+                  <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider">Distance</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-100">
                 {trips.length > 0 ? (
                   trips.map((trip, index) => (
                     <tr
                       key={trip.id}
-                      className="border-b transition duration-200 hover:bg-gray-100"
+                      className="hover:bg-neutral-50/80 transition-colors"
                     >
-                      <td className="py-4 px-4">{index + 1}</td>
-                      <td className="py-4 px-4">{trip.registration_number}</td>
-                      <td className="py-4 px-4">{trip.driver_name}</td>
-                      <td className="py-4 px-4">{trip.hospital_name}</td>
-                      <td className="py-4 px-4">{trip.trip_start}</td>
-                      <td className="py-4 px-4">{trip.trip_end}</td>
-                      <td className="py-4 px-4">{trip.distance_covered_km} km</td>
+                      <td className="py-3 px-4 text-sm text-neutral-500">{index + 1}</td>
+                      <td className="py-3 px-4 text-sm font-medium text-black">{trip.registration_number}</td>
+                      <td className="py-3 px-4 text-sm text-neutral-600">{trip.driver_name}</td>
+                      <td className="py-3 px-4 text-sm text-neutral-600">{trip.hospital_name}</td>
+                      <td className="py-3 px-4 text-sm text-neutral-600">{trip.trip_start}</td>
+                      <td className="py-3 px-4 text-sm text-neutral-600">{trip.trip_end}</td>
+                      <td className="py-3 px-4 text-sm text-neutral-600">{trip.distance_covered_km} km</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td
                       colSpan="7"
-                      className="py-6 text-center text-gray-500 text-lg"
+                      className="py-12 text-center text-neutral-400 text-sm"
                     >
                       No records found
                     </td>
@@ -113,6 +117,7 @@ export function Trips() {
               </tbody>
             </table>
           </div>
+
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
